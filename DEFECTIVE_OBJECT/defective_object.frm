@@ -1,0 +1,290 @@
+VERSION 5.00
+Begin {C62A69F0-16DC-11CE-9E98-00AA00574A4F} defective 
+   Caption         =   "不良個数"
+   ClientHeight    =   16404
+   ClientLeft      =   120
+   ClientTop       =   468
+   ClientWidth     =   5388
+   OleObjectBlob   =   "defective_object.frx":0000
+   ShowModal       =   0   'False
+   StartUpPosition =   1  'オーナー フォームの中央
+End
+Attribute VB_Name = "defective"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = True
+Attribute VB_Exposed = False
+Option Explicit
+
+Private Sub UserForm_Initialize()
+    ' 日付セット
+    txtDate.Value = Format(Date, "yyyy/mm/dd")
+    txtDate.Enabled = False
+    
+    ' 種別コンボボックスに項目追加
+    With comType
+        .AddItem "単体品(内輪)"
+        .AddItem "単体品(外輪)"
+        .AddItem "完成品"
+        .AddItem "部品"
+    End With
+    
+    ' テキストボックス全項目初期化＆非表示
+    Dim i As Integer
+    On Error Resume Next
+    For i = 1 To 14
+        Me.Controls("txtDetails" & i).Value = ""
+        Me.Controls("txtDetails" & i).Visible = False
+    Next i
+    
+    ' ラベルも非表示（Label9～Label34）
+    For i = 9 To 34
+        Me.Controls("Label" & i).Visible = False
+    Next i
+    
+    On Error GoTo 0
+    
+    ' 初期フォームサイズと送信ボタン位置
+    Me.Height = 400
+    btnSubmit.Top = Me.Height - 40
+    btnSubmit.Visible = False   ' ← 初期状態は非表示
+
+End Sub
+
+Private Sub comType_Change()
+    Dim i As Integer
+    
+    ' 一旦非表示（テキストボックス、ラベル、入力ボタンの非表示）
+    On Error Resume Next
+    For i = 1 To 14
+        Me.Controls("txtDetails" & i).Visible = False
+    Next i
+    For i = 9 To 34
+        Me.Controls("Label" & i).Visible = False
+    Next i
+    On Error GoTo 0
+    
+    
+    ' 選択による表示切替＋フォームサイズ調整
+    Select Case comType.Value
+    
+        Case "単体品(内輪)", "単体品(外輪)"
+            ' txtDetails1～8表示
+            For i = 1 To 8
+                Me.Controls("txtDetails" & i).Visible = True
+            Next i
+            
+            ' Label9～16表示
+            For i = 9 To 16
+                Me.Controls("Label" & i).Visible = True
+            Next i
+            
+            ' 入力フォームの大きさとボタン位置
+            Me.Height = 620
+            btnSubmit.Top = Me.Height - 70
+            btnSubmit.Visible = True
+            
+            
+        Case "完成品"
+            ' txtDetails1～14表示
+            For i = 1 To 14
+                Me.Controls("txtDetails" & i).Visible = True
+            Next i
+            
+            ' Label17～30表示
+            For i = 17 To 30
+                Me.Controls("Label" & i).Visible = True
+            Next i
+            
+            ' 入力フォームの大きさとボタン位置
+            Me.Height = 800
+            btnSubmit.Top = Me.Height - 70
+            btnSubmit.Visible = True
+            
+            
+        Case "部品"
+            ' txtDetails1～4表示
+            For i = 1 To 4
+                Me.Controls("txtDetails" & i).Visible = True
+            Next i
+            
+            ' Label31～34表示
+            For i = 31 To 34
+                Me.Controls("Label" & i).Visible = True
+            Next i   ' ← これが抜けていた！
+            
+            ' 入力フォームの大きさとボタン位置
+            Me.Height = 500
+            btnSubmit.Top = Me.Height - 70
+            btnSubmit.Visible = True
+            
+            
+        Case Else
+            ' 未選択時は送信ボタン非表示
+            btnSubmit.Visible = False
+            
+    End Select
+End Sub
+Private Sub btnSubmit_Click()
+    Dim ws As Worksheet
+    Dim NextRow As Long
+    Dim msg As String
+    Dim frmLoading As Object
+    Dim i As Integer
+    
+    msg = ""
+    
+    ' ====== 未入力チェック ======
+    If Trim(Me.txtDate.Value) = "" Then msg = msg & "・作成日" & vbCrLf
+    If Not (Me.optTiming_Aco.Value Or Me.optTiming_Afin.Value Or Me.optTiming_Bco.Value Or Me.optTiming_Bfin.Value) Then
+        msg = msg & "・入力タイミング" & vbCrLf
+    End If
+    If Trim(Me.comType.Value) = "" Then msg = msg & "・不良品" & vbCrLf
+    
+    If msg <> "" Then
+        MsgBox "以下の項目が未入力です：" & vbCrLf & msg, vbExclamation, "入力チェック"
+        Exit Sub
+    End If
+    
+    ' ====== 送信中フォーム表示 ======
+    Set frmLoading = VBA.UserForms.Add("frmLoading")
+    frmLoading.Show vbModeless
+    DoEvents
+    
+    On Error GoTo ErrHandler
+    
+    ' ====== データ書き込み ======
+    Set ws = Sheets("不良個数")
+    NextRow = ws.Cells(ws.Rows.Count, 1).End(xlUp).Row + 1
+    
+    With ws
+        .Cells(NextRow, 1).Value = txtDate.Value
+        
+        If optTiming_Aco.Value Then
+            .Cells(NextRow, 2).Value = "A直/呼番切替時"
+        ElseIf optTiming_Afin.Value Then
+            .Cells(NextRow, 2).Value = "A直/終業時"
+        ElseIf optTiming_Bco.Value Then
+            .Cells(NextRow, 2).Value = "B直/呼番切替時"
+        ElseIf optTiming_Bfin.Value Then
+            .Cells(NextRow, 2).Value = "B直/終業時"
+        End If
+        
+        ' ====== 転記処理 ======
+        Select Case comType.Value
+            Case "単体品(内輪)"
+                For i = 1 To 8
+                    .Cells(NextRow, i + 2).Value = Val(Me.Controls("txtDetails" & i).Value)
+                Next i
+            Case "単体品(外輪)"
+                For i = 1 To 8
+                    .Cells(NextRow, i + 10).Value = Val(Me.Controls("txtDetails" & i).Value)
+                Next i
+            Case "完成品"
+                For i = 1 To 14
+                    .Cells(NextRow, i + 18).Value = Val(Me.Controls("txtDetails" & i).Value)
+                Next i
+            Case "部品"
+                For i = 1 To 4
+                    .Cells(NextRow, i + 32).Value = Val(Me.Controls("txtDetails" & i).Value)
+                Next i
+        End Select
+        
+        .Cells(NextRow, 37).Value = Format(Now, "yyyy/mm/dd hh:mm:ss")
+        .Cells(NextRow, 38).Value = Environ("ComputerName")
+    End With
+    
+   ' ====== ファイル保存 ======
+    ThisWorkbook.Save
+    
+    ' ====== 完了処理 ======
+    Unload frmLoading
+    MsgBox "送信完了！", vbInformation
+    Unload Me
+    Exit Sub
+
+ErrHandler:
+    Unload frmLoading
+    MsgBox "エラーが発生しました: " & Err.Description, vbExclamation
+End Sub
+' 共通処理
+Private Sub CallTenKey(ByVal tb As MSForms.TextBox)
+    frmTenKeyTemplate.TextBox1.Text = ""  ' テンキー側の入力欄をクリア
+    
+    ' テキストボックスを渡す
+    Set frmTenKeyTemplate.TargetTextBox = tb
+    
+    frmTenKeyTemplate.Show vbModal
+    
+    ' 値を戻す
+    If frmTenKeyTemplate.EnteredValue <> "" Then
+        tb.Text = frmTenKeyTemplate.EnteredValue
+    End If
+End Sub
+
+' 各テキストボックスのEnterイベント
+Private Sub txtDetails1_Enter()
+    CallTenKey Me.txtDetails1
+End Sub
+
+Private Sub txtDetails2_Enter()
+    CallTenKey Me.txtDetails2
+End Sub
+
+Private Sub txtDetails3_Enter()
+    CallTenKey Me.txtDetails3
+End Sub
+
+Private Sub txtDetails4_Enter()
+    CallTenKey Me.txtDetails4
+End Sub
+
+Private Sub txtDetails5_Enter()
+    CallTenKey Me.txtDetails5
+End Sub
+
+Private Sub txtDetails6_Enter()
+    CallTenKey Me.txtDetails6
+End Sub
+
+Private Sub txtDetails7_Enter()
+    CallTenKey Me.txtDetails7
+End Sub
+
+Private Sub txtDetails8_Enter()
+    CallTenKey Me.txtDetails8
+End Sub
+
+Private Sub txtDetails9_Enter()
+    CallTenKey Me.txtDetails9
+End Sub
+
+Private Sub txtDetails10_Enter()
+    CallTenKey Me.txtDetails10
+End Sub
+
+Private Sub txtDetails11_Enter()
+    CallTenKey Me.txtDetails11
+End Sub
+
+Private Sub txtDetails12_Enter()
+    CallTenKey Me.txtDetails12
+End Sub
+
+Private Sub txtDetails13_Enter()
+    CallTenKey Me.txtDetails13
+End Sub
+
+Private Sub txtDetails14_Enter()
+    CallTenKey Me.txtDetails14
+End Sub
+Private Sub UserForm_KeyDown(ByVal KeyCode As MSForms.ReturnInteger, ByVal Shift As Integer)
+    ' Enterキーを制御（QR用以外は無効）
+    If KeyCode = vbKeyReturn Then
+        If Not (ActiveControl Is txtID Or ActiveControl Is txtYOBIBAN) Then
+            KeyCode = 0
+        End If
+    End If
+End Sub
+
+

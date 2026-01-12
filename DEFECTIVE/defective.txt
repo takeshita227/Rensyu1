@@ -224,62 +224,6 @@ Private Sub CallTenKey(ByVal tb As MSForms.TextBox)
     End If
 End Sub
 
-' 各テキストボックスのEnterイベント
-Private Sub txtDetails1_Enter()
-    CallTenKey Me.txtDetails1
-End Sub
-
-Private Sub txtDetails2_Enter()
-    CallTenKey Me.txtDetails2
-End Sub
-
-Private Sub txtDetails3_Enter()
-    CallTenKey Me.txtDetails3
-End Sub
-
-Private Sub txtDetails4_Enter()
-    CallTenKey Me.txtDetails4
-End Sub
-
-Private Sub txtDetails5_Enter()
-    CallTenKey Me.txtDetails5
-End Sub
-
-Private Sub txtDetails6_Enter()
-    CallTenKey Me.txtDetails6
-End Sub
-
-Private Sub txtDetails7_Enter()
-    CallTenKey Me.txtDetails7
-End Sub
-
-Private Sub txtDetails8_Enter()
-    CallTenKey Me.txtDetails8
-End Sub
-
-Private Sub txtDetails9_Enter()
-    CallTenKey Me.txtDetails9
-End Sub
-
-Private Sub txtDetails10_Enter()
-    CallTenKey Me.txtDetails10
-End Sub
-
-Private Sub txtDetails11_Enter()
-    CallTenKey Me.txtDetails11
-End Sub
-
-Private Sub txtDetails12_Enter()
-    CallTenKey Me.txtDetails12
-End Sub
-
-Private Sub txtDetails13_Enter()
-    CallTenKey Me.txtDetails13
-End Sub
-
-Private Sub txtDetails14_Enter()
-    CallTenKey Me.txtDetails14
-End Sub
 Private Sub UserForm_KeyDown(ByVal KeyCode As MSForms.ReturnInteger, ByVal Shift As Integer)
     ' Enterキーを制御（QR用以外は無効）
     If KeyCode = vbKeyReturn Then

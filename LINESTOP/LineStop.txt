@@ -256,6 +256,4 @@ Private Sub UserForm_KeyDown(ByVal KeyCode As MSForms.ReturnInteger, ByVal Shift
     End If
 End Sub
 
-2026/1/12/1149変更
-2026/1/12/1154変更
-2026/1/12/1242変更
+

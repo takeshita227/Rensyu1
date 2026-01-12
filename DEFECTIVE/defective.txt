@@ -26,11 +26,6 @@ Private Sub UserForm_Initialize()
         Me.Controls("Label" & i).Visible = False
     Next i
     
-    '入力ボタンも非表示
-     For i = 1 To 14
-        Me.Controls("com_OpenTenKey" & i).Visible = False
-    Next i
-    
     On Error GoTo 0
     
     ' 初期フォームサイズと送信ボタン位置
@@ -51,9 +46,7 @@ Private Sub comType_Change()
     For i = 9 To 34
         Me.Controls("Label" & i).Visible = False
     Next i
-    For i = 1 To 14
-        Me.Controls("com_OpenTenKey" & i).Visible = False
-    Next i
+    
     On Error GoTo 0
     
     
@@ -70,10 +63,7 @@ Private Sub comType_Change()
                 Me.Controls("Label" & i).Visible = True
             Next i
             
-             '入力ボタンも表示
-            For i = 1 To 8
-                Me.Controls("com_OpenTenKey" & i).Visible = True
-            Next i
+
             
             ' 入力フォームの大きさとボタン位置の決定
             Me.Height = 620
@@ -89,12 +79,7 @@ Private Sub comType_Change()
             For i = 17 To 30
                 Me.Controls("Label" & i).Visible = True
             Next i
-            
-             '入力ボタンも表示
-            For i = 1 To 14
-                Me.Controls("com_OpenTenKey" & i).Visible = True
-            Next i
-            
+           
             
              ' 入力フォームの大きさとボタン位置の決定
             Me.Height = 800
@@ -110,11 +95,7 @@ Private Sub comType_Change()
             ' Label31～34表示
             For i = 31 To 34
                 Me.Controls("Label" & i).Visible = True
-            Next i
-             '入力ボタンも表示
-            For i = 1 To 4
-                Me.Controls("com_OpenTenKey" & i).Visible = True
-            Next i
+    
             
              ' 入力フォームの大きさとボタン位置の決定
             Me.Height = 500

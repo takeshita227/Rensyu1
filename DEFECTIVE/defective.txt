@@ -1,0 +1,166 @@
+Option Explicit
+
+Private Sub UserForm_Initialize()
+    ' 日付セット
+    txtDate.Value = Format(Date, "yyyy/mm/dd")
+    txtDate.Enabled = False
+    
+    ' 種別コンボボックスに項目追加
+    With comType
+        .AddItem "単体品(内輪)"
+        .AddItem "単体品(外輪)"
+        .AddItem "完成品"
+        .AddItem "部品"
+    End With
+    
+    ' 詳細コンボボックスは空にしておく
+    comDetails.Clear
+
+End Sub
+
+
+' 環種を選んだときに詳細を変える
+Private Sub comType_Change()
+    comDetails.Clear ' 一度クリア
+    
+    Select Case comType.Value
+    Case "単体品(内輪)"
+            comDetails.AddItem "旋削"
+            comDetails.AddItem "軌道研削"
+            comDetails.AddItem "内径研削"
+            comDetails.AddItem "端面研削"
+            comDetails.AddItem "外径研削"
+            comDetails.AddItem "その他研削"
+            comDetails.AddItem "落下品"
+            comDetails.AddItem "段取品"
+        Case "単体品(外輪)"
+            comDetails.AddItem "旋削"
+            comDetails.AddItem "軌道研削"
+            comDetails.AddItem "内径研削"
+            comDetails.AddItem "端面研削"
+            comDetails.AddItem "外径研削"
+            comDetails.AddItem "その他研削"
+            comDetails.AddItem "落下品"
+            comDetails.AddItem "段取品"
+        Case "完成品"
+            comDetails.AddItem "端面"
+            comDetails.AddItem "内径"
+            comDetails.AddItem "外径"
+            comDetails.AddItem "落下品"
+            comDetails.AddItem "すきま"
+            comDetails.AddItem "音"
+            comDetails.AddItem "保持器かしめ"
+            comDetails.AddItem "リベット・ボール"
+            comDetails.AddItem "グリス"
+            comDetails.AddItem "シール・シールド"
+            comDetails.AddItem "レーザー"
+            comDetails.AddItem "回転調子"
+            comDetails.AddItem "その他"
+            comDetails.AddItem "段取品"
+        Case "部品"
+            comDetails.AddItem "保持器(FY)"
+            comDetails.AddItem "保持器(鉄・他)"
+            comDetails.AddItem "シール"
+            comDetails.AddItem "シールド"
+        Case Else
+            ' 何も選ばれてない場合は空白
+    End Select
+End Sub
+
+Private Sub btnSubmit_Click()
+    Dim ws As Worksheet
+    Dim NextRow As Long
+    Dim msg As String
+    Dim frmLoading As Object
+    
+    msg = ""
+    
+    ' ====== 未入力チェック ======
+    If Trim(Me.txtDate.Value) = "" Then msg = msg & "・作成日" & vbCrLf
+    
+    If Not (Me.optTiming_Aco.Value Or Me.optTiming_Afin.Value Or Me.optTiming_Bco.Value Or Me.optTiming_Bfin.Value) Then
+        msg = msg & "・入力タイミング" & vbCrLf
+    End If
+    
+    If Trim(Me.comType.Value) = "" Then msg = msg & "・不良品" & vbCrLf
+    If Trim(Me.comDetails.Value) = "" Then msg = msg & "・不良内容" & vbCrLf
+    If Trim(Me.txtDefective.Value) = "" Then msg = msg & "・個数" & vbCrLf
+    
+    ' 未入力があればエラー表示して処理中断
+    If msg <> "" Then
+        MsgBox "以下の項目が未入力です：" & vbCrLf & msg, vbExclamation, "入力チェック"
+        Exit Sub
+    End If
+
+    ' ====== 送信中フォーム表示 ======
+    Set frmLoading = VBA.UserForms.Add("frmLoading")
+    frmLoading.Show vbModeless
+    DoEvents
+    
+    On Error GoTo ErrHandler
+    
+    ' ====== データ書き込み ======
+    Set ws = Sheets("不良個数")
+    NextRow = ws.Cells(ws.Rows.Count, 1).End(xlUp).Row + 1
+    
+    With ws
+        .Cells(NextRow, 1).Value = txtDate.Value
+        .Cells(NextRow, 5).Value = txtDefective.Value
+
+        If optTiming_Aco.Value Then
+            .Cells(NextRow, 2).Value = "A直/呼番切替時"
+        ElseIf optTiming_Afin.Value Then
+            .Cells(NextRow, 2).Value = "A直/終業時"
+        ElseIf optTiming_Bco.Value Then
+            .Cells(NextRow, 2).Value = "B直/呼番切替時"
+        ElseIf optTiming_Bfin.Value Then
+            .Cells(NextRow, 2).Value = "B直/終業時"
+        Else
+            .Cells(NextRow, 2).Value = ""
+        End If
+                
+        .Cells(NextRow, 3).Value = comType.Value
+        .Cells(NextRow, 4).Value = comDetails.Value
+        .Cells(NextRow, 6).Value = Format(Now, "yyyy/mm/dd hh:mm:ss")
+        .Cells(NextRow, 7).Value = Environ("ComputerName")
+    End With
+
+    ' ====== ファイル保存 ======
+    ThisWorkbook.Save
+    
+    ' ====== 完了処理 ======
+    Unload frmLoading
+    MsgBox "送信完了！", vbInformation
+    Unload Me
+    Exit Sub
+
+ErrHandler:
+    Unload frmLoading
+    MsgBox "エラーが発生しました: " & Err.Description, vbExclamation
+End Sub
+
+Private Sub com_OpenTenKey_Click()
+    frmTenKeyTemplate.TextBox1.Text = ""
+    
+    ' txtDefective を直接渡す
+    Set frmTenKeyTemplate.TargetTextBox = Me.txtDefective
+    
+    frmTenKeyTemplate.Show vbModal
+
+    ' 値を戻す
+    If frmTenKeyTemplate.EnteredValue <> "" Then
+        Me.txtDefective.Text = frmTenKeyTemplate.EnteredValue
+    End If
+End Sub
+
+Private Sub UserForm_KeyDown(ByVal KeyCode As MSForms.ReturnInteger, ByVal Shift As Integer)
+    ' Enterキーを制御（QR用以外は無効）
+    If KeyCode = vbKeyReturn Then
+        If Not (ActiveControl Is txtID Or ActiveControl Is txtYOBIBAN) Then
+            KeyCode = 0
+        End If
+    End If
+End Sub
+
+2026/1/12/1258に変更
+
